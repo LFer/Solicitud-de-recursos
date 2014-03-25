@@ -1,0 +1,20 @@
+{
+	"name" : "Solicitud de recursos",
+	"version" : "1.0",
+	"author" : "Datamatic",
+	"website" : "www.datamatic.com.uy",
+	"category" : "MRREE",
+	"description": "MRREE",
+	'depends' : ["account", "stock",],
+	"init_xml" : [],
+	"demo_xml" : [],
+	"update_xml" : [
+		'menu.xml',
+		'solicitud_recursos_view.xml',
+		'solicitud_recursos_workflow.xml',
+		'solicitud_recursos_secuencia.xml',
+	],
+	"data" : [],
+	"installable": True,
+	"active": False,
+}
