@@ -84,11 +84,11 @@
 		<field name="signal">button_no_hay_stock</field>
 		<field name="condition">True</field>
 	</record>
-	<record model="workflow.transition" id="trans_SR_6">
+	<!--record model="workflow.transition" id="trans_SR_6">
 		<field name="act_from" ref="act_Cumple_Parcial"/>
 		<field name="act_to" ref="act_Para_Compras"/>
 		<field name="signal">button_a_comprar</field>
 		<field name="condition">True</field>
-	</record>
+	</record-->
 </data>
 </openerp>

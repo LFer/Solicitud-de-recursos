@@ -1,5 +1,5 @@
 {
-	"name" : "Solicitud de recursos",
+	"name" : "GRP - Solicitud de recursos",
 	"version" : "1.0",
 	"author" : "Datamatic",
 	"website" : "www.datamatic.com.uy",

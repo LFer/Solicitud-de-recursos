@@ -2,7 +2,7 @@
 
 from osv import osv
 from osv import fields
-import openerp.addons.decimal_precision as dp
+import decimal_precision as dp
 import time
 
 ##
@@ -11,7 +11,7 @@ import time
 ##
 
 class solicitud_recursos(osv.osv):
-	
+	_inherit = "mail.thread"
 	_name="solicitud.recursos"
 
 	LISTA_ESTADOS_SOLICITUD = [
@@ -21,7 +21,7 @@ class solicitud_recursos(osv.osv):
 		('rejected', 'Rechazado'),
 		('closed_total', 'Cumplimiento total'),
 		('closed_partial', 'Cumplimiento parcial'),
-		('purchase_request', 'A comprar' ),
+		#('purchase_request', 'A comprar' ),
 	]
 	
 	def _get_company_id(self, cr, uid, context=None):
@@ -58,18 +58,18 @@ class solicitud_recursos(osv.osv):
 			return None
 
 	_columns = {
+		'inciso':fields.char ('Inciso'),
+		'u_e': fields.char ('UE'),
 		'name': fields.char ( 'Solicitud', size = 32, required = True ), # Nro Solicitud
 #		'origin': fields.char ( 'Documento orígen', size = 32 ),
 		'date_start': fields.date ( 'Fecha de solicitud' ), # Fecha de solicitud
-		'date_end': fields.date ( 'Vencimiento de solicitud' ),	
-		'description': fields.text ( 'Descripción' ),
+		'description': fields.char ( 'Descripción', size= 10),
 		'user_id': fields.many2one ( 'res.users', 'Solicitante' ), # Solicitante
 		'srl_ids_solicitado' : fields.one2many ( 'solicitud.recursos.line', 'sr_solicitud_id', 'Productos solicitados' ),
 		'state': fields.selection ( LISTA_ESTADOS_SOLICITUD, 'Estado', size = 20, readonly = True ),
 		'user_id':fields.many2one('res.users', 'Solicitante'),
 		'company_id': fields.many2one ( 'res.company', 'Compañía'), # Compañía
 		'company_id': fields.many2one ( 'res.company','Compañía' ),
-		'presupuesto': fields.text ( 'Presupuesto', size = 20 ),
 		'warehouse':fields.many2one('stock.warehouse','Centro de almacenaje'), #encontrar la clase almacen de openerp para relacionarla
 
 		######################## Estados ####################################
@@ -120,11 +120,13 @@ class solicitud_recursos(osv.osv):
 		return True
 
 	############ Senhal ###########
-	def action_Para_Compras ( self, cr, uid, ids, context = None ):
+	"""def action_Para_Compras ( self, cr, uid, ids, context = None ):
 		self.write ( cr, uid, ids, { 'state' : 'purchase_request' }, context )
-		return True
+		return True"""
 
 	_defaults = {
+		'inciso' : '06',
+		'u_e' : '001',
 		'state' : 'draft',
 		'name' : lambda obj, cr, uid, context: obj.pool.get ( 'ir.sequence' ).get ( cr, uid, 'resource.requisition.number' ),
 		'company_id': _get_company_id,
@@ -145,6 +147,20 @@ class solicitud_recursos_line ( osv.osv ):
 		('parcial', 'Entregado Parcial'),
 		('acompra', 'Enviado a compra'),
 	]
+	
+	def onchange_product_id(self, cr, uid, ids, product_id, product_uom_id, context=None):
+                """ Changes UoM and name if product_id changes.
+                @param name: Name of the field
+                @param product_id: Changed product_id
+                @return:  Dictionary of changed values
+                """
+                value = {'product_uom_id': ''}
+                if product_id:
+                        prod = self.pool.get('product.product').browse(cr, uid, product_id, context=context)
+                        value = {'product_uom_id': prod.uom_id.id,'product_requested_qty':1.0}
+                return {'value': value}
+                
+	             
 
 	def _get_uom_id(self, cr, uid, *args):
 		cr.execute('select id from product_uom order by id limit 1')
@@ -153,15 +169,18 @@ class solicitud_recursos_line ( osv.osv ):
 
 	_columns = {
 		'product_id': fields.many2one ('product.product', 'Producto' ), # Producto
-		'product_uom_id': fields.many2one('product.uom', 'Unidad de medida'),
-		'product_requested_qty': fields.float ( 'Cantidad requerida', digits_compute=dp.get_precision('Unidad de medida')),
+		'product_uom_id': fields.many2one('product.uom', 'UdM', readonly=True),
+		'product_requested_qty': fields.float ( 'Cant Requerida', digits_compute=dp.get_precision('Unidad de medida')),
 		'sr_solicitud_id' : fields.many2one('solicitud.recursos','Solicitado', ondelete='cascade'),
 		'state': fields.related ( 'sr_solicitud_id', 'state', type = 'char', readonly=True ),
-		'precio': fields.float ( 'Precio' ),
+		'precio': fields.char('Precio', readonly=True), #cuando este la relacion va many2one a 'pricelist.partnerinfo'
 		'product_date_need':fields.date('Fecha de necesidad'),
-		'product_purchase_order':fields.float('Orden de compra'),
+		'product_purchase_order':fields.char('Orden de compra', readonly=True),
 		'comentarios': fields.text ( 'Comentarios', size = 30 ),
-		'estado': fields.selection ( LISTA_ESTADOS_LINEA_SOLICITUD, 'Estado', size = 20, readonly = True ),
+		'estado': fields.selection ( LISTA_ESTADOS_LINEA_SOLICITUD, 'Status entrega', size = 20, readonly = True ),
+		'num_entrega': fields.char ('N Entrega'),
+		'cant_engregada': fields.char ('Cant Entregada'),
+		'O/C': fields.char ('O/C'),
 	}
 
 	defaults = {
